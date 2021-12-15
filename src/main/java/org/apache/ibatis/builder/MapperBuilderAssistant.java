@@ -183,6 +183,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
     id = applyCurrentNamespace(id, false);
     extend = applyCurrentNamespace(extend, true);
 
+    // 获取基类resultMap并进行合并操作
     if (extend != null) {
       if (!configuration.hasResultMap(extend)) {
         throw new IncompleteElementException("Could not find a parent resultmap with id '" + extend + "'");
@@ -208,6 +209,7 @@ public class MapperBuilderAssistant extends BaseBuilder {
       }
       resultMappings.addAll(extendedResultMappings);
     }
+    // 构建resultMap实例对象
     ResultMap resultMap = new ResultMap.Builder(configuration, id, type, resultMappings, autoMapping)
         .discriminator(discriminator)
         .build();
@@ -358,6 +360,24 @@ public class MapperBuilderAssistant extends BaseBuilder {
     return resultMaps;
   }
 
+  /**
+   * 将属性配置包装到resultMapping对象中
+   * @param resultType
+   * @param property
+   * @param column
+   * @param javaType
+   * @param jdbcType
+   * @param nestedSelect
+   * @param nestedResultMap
+   * @param notNullColumn
+   * @param columnPrefix
+   * @param typeHandler
+   * @param flags
+   * @param resultSet
+   * @param foreignColumn
+   * @param lazy
+   * @return
+   */
   public ResultMapping buildResultMapping(
       Class<?> resultType,
       String property,

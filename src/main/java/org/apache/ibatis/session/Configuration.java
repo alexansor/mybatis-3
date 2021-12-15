@@ -737,6 +737,12 @@ public class Configuration {
     mapperRegistry.addMappers(packageName);
   }
 
+  /**
+   * addMapper创建mapper的代理对象
+   * MapperProxyFactory -> MapperProxy -> MapperMethod
+   * @param type
+   * @param <T>
+   */
   public <T> void addMapper(Class<T> type) {
     mapperRegistry.addMapper(type);
   }

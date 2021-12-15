@@ -43,6 +43,10 @@ public class ResultMapResolver {
     this.autoMapping = autoMapping;
   }
 
+  /**
+   * 解析并添加resultMap
+   * @return
+   */
   public ResultMap resolve() {
     return assistant.addResultMap(this.id, this.type, this.extend, this.discriminator, this.resultMappings, this.autoMapping);
   }

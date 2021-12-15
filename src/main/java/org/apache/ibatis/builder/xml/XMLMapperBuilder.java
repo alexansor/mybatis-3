@@ -89,8 +89,11 @@ public class XMLMapperBuilder extends BaseBuilder {
 
   public void parse() {
     if (!configuration.isResourceLoaded(resource)) {
+      // 解析resource
       configurationElement(parser.evalNode("/mapper"));
+      // 添加已解析的resource
       configuration.addLoadedResource(resource);
+      // 绑定namespace
       bindMapperForNamespace();
     }
 
@@ -110,11 +113,16 @@ public class XMLMapperBuilder extends BaseBuilder {
         throw new BuilderException("Mapper's namespace cannot be empty");
       }
       builderAssistant.setCurrentNamespace(namespace);
+      // 解析缓存
       cacheRefElement(context.evalNode("cache-ref"));
       cacheElement(context.evalNode("cache"));
+      // 解析parameterMap
       parameterMapElement(context.evalNodes("/mapper/parameterMap"));
+      // 解析resultMap，添加到configuration的resultMap属性中
       resultMapElements(context.evalNodes("/mapper/resultMap"));
+      // 解析sql，保存到XMLConfigBuilder的sqlFragments属性中
       sqlElement(context.evalNodes("/mapper/sql"));
+      // 解析sql脚本
       buildStatementFromContext(context.evalNodes("select|insert|update|delete"));
     } catch (Exception e) {
       throw new BuilderException("Error parsing Mapper XML. The XML location is '" + resource + "'. Cause: " + e, e);
@@ -132,6 +140,7 @@ public class XMLMapperBuilder extends BaseBuilder {
     for (XNode context : list) {
       final XMLStatementBuilder statementParser = new XMLStatementBuilder(configuration, builderAssistant, context, requiredDatabaseId);
       try {
+        // 使用statementParser对脚本进行解析
         statementParser.parseStatementNode();
       } catch (IncompleteElementException e) {
         configuration.addIncompleteStatement(statementParser);
@@ -252,34 +261,54 @@ public class XMLMapperBuilder extends BaseBuilder {
     return resultMapElement(resultMapNode, Collections.<ResultMapping> emptyList());
   }
 
+  /**
+   * 解析resultMap
+   * @param resultMapNode 配置resultMap节点
+   * @param additionalResultMappings 附加的resultMappings
+   * @return
+   * @throws Exception
+   */
   private ResultMap resultMapElement(XNode resultMapNode, List<ResultMapping> additionalResultMappings) throws Exception {
+    // 拼装resultMap的ID，这个不是我们配置的id属性值
     ErrorContext.instance().activity("processing " + resultMapNode.getValueBasedIdentifier());
+    // 获取配置的id属性值
     String id = resultMapNode.getStringAttribute("id",
         resultMapNode.getValueBasedIdentifier());
+    // 获取对应的映射类型（多个类型是因为版本升级原因，拿到一个即可）
     String type = resultMapNode.getStringAttribute("type",
         resultMapNode.getStringAttribute("ofType",
             resultMapNode.getStringAttribute("resultType",
                 resultMapNode.getStringAttribute("javaType"))));
+    // 获取继承的父类resultMap，比如AbstractDao.BASE_RESULT_MAP
     String extend = resultMapNode.getStringAttribute("extends");
+    // autoMapping配置（autoMapping用于自动将字段映射到属性，不区分大小写，不会做驼峰下划线转换）
+    // 默认开启，可通过settings->autoMappingBehavior配置进行关闭（NONE  PARTIAL  FULL）
     Boolean autoMapping = resultMapNode.getBooleanAttribute("autoMapping");
+    // 通过type解析出对应的类
     Class<?> typeClass = resolveClass(type);
     Discriminator discriminator = null;
     List<ResultMapping> resultMappings = new ArrayList<ResultMapping>();
     resultMappings.addAll(additionalResultMappings);
+    // 开始解析属性
     List<XNode> resultChildren = resultMapNode.getChildren();
     for (XNode resultChild : resultChildren) {
       if ("constructor".equals(resultChild.getName())) {
+        // 解析构造器属性
         processConstructorElement(resultChild, typeClass, resultMappings);
       } else if ("discriminator".equals(resultChild.getName())) {
+        // 解析discriminator属性（discriminator用户对结果进行case并获取指定列的情况）
         discriminator = processDiscriminatorElement(resultChild, typeClass, resultMappings);
       } else {
+        // 解析普通属性
         List<ResultFlag> flags = new ArrayList<ResultFlag>();
+        // 如果是id，则添加ResultFlag.ID到flags
         if ("id".equals(resultChild.getName())) {
           flags.add(ResultFlag.ID);
         }
         resultMappings.add(buildResultMappingFromContext(resultChild, typeClass, flags));
       }
     }
+    // 创建resultMap解析器并进行解析
     ResultMapResolver resultMapResolver = new ResultMapResolver(builderAssistant, id, typeClass, extend, discriminator, resultMappings, autoMapping);
     try {
       return resultMapResolver.resolve();
@@ -289,6 +318,13 @@ public class XMLMapperBuilder extends BaseBuilder {
     }
   }
 
+  /**
+   * 解析构造器属性
+   * @param resultChild
+   * @param resultType
+   * @param resultMappings
+   * @throws Exception
+   */
   private void processConstructorElement(XNode resultChild, Class<?> resultType, List<ResultMapping> resultMappings) throws Exception {
     List<XNode> argChildren = resultChild.getChildren();
     for (XNode argChild : argChildren) {
@@ -357,6 +393,14 @@ public class XMLMapperBuilder extends BaseBuilder {
     return true;
   }
 
+  /**
+   * 通过节点构建resultMapping
+   * @param context
+   * @param resultType
+   * @param flags
+   * @return
+   * @throws Exception
+   */
   private ResultMapping buildResultMappingFromContext(XNode context, Class<?> resultType, List<ResultFlag> flags) throws Exception {
     String property;
     if (flags.contains(ResultFlag.CONSTRUCTOR)) {
