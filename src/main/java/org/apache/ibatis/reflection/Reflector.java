@@ -91,13 +91,19 @@ public class Reflector {
     }
   }
 
+  /**
+   * 添加get方法
+   * @param cls
+   */
   private void addGetMethods(Class<?> cls) {
     Map<String, List<Method>> conflictingGetters = new HashMap<String, List<Method>>();
     Method[] methods = getClassMethods(cls);
     for (Method method : methods) {
+      // 如果方法参数大于0，跳过
       if (method.getParameterTypes().length > 0) {
         continue;
       }
+      // 如果是get/is开头的方法则获取名字并将首字符置为小写
       String name = method.getName();
       if ((name.startsWith("get") && name.length() > 3)
           || (name.startsWith("is") && name.length() > 2)) {

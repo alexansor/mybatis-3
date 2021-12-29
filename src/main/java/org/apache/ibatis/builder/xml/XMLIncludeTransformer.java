@@ -65,7 +65,7 @@ public class XMLIncludeTransformer {
         toInclude = source.getOwnerDocument().importNode(toInclude, true);
       }
       source.getParentNode().replaceChild(toInclude, source);
-      while (toInclude.hasChildNodes()) {
+      while (toInclude.hasChildNodes()) { 
         toInclude.getParentNode().insertBefore(toInclude.getFirstChild(), toInclude);
       }
       toInclude.getParentNode().removeChild(toInclude);

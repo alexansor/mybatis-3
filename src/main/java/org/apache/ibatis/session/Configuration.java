@@ -388,6 +388,10 @@ public class Configuration {
     this.useGeneratedKeys = useGeneratedKeys;
   }
 
+  /**
+   * 获取默认执行器类型，如果不指定，默认使用SIMPLE
+   * @return
+   */
   public ExecutorType getDefaultExecutorType() {
     return defaultExecutorType;
   }
@@ -564,6 +568,12 @@ public class Configuration {
     return newExecutor(transaction, defaultExecutorType);
   }
 
+  /**
+   * 创建执行器
+   * @param transaction
+   * @param executorType
+   * @return
+   */
   public Executor newExecutor(Transaction transaction, ExecutorType executorType) {
     executorType = executorType == null ? defaultExecutorType : executorType;
     executorType = executorType == null ? ExecutorType.SIMPLE : executorType;

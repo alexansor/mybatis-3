@@ -50,6 +50,7 @@ public interface TransactionFactory {
    * @param autoCommit Desired autocommit
    * @return Transaction
    * @since 3.1.0
+   * 创建mybatis定义的事务，该事务对datasource进行了包装，可以实现对连接的管理
    */
   Transaction newTransaction(DataSource dataSource, TransactionIsolationLevel level, boolean autoCommit);
 

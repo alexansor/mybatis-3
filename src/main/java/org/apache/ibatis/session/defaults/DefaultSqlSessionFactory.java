@@ -33,6 +33,8 @@ import org.apache.ibatis.transaction.managed.ManagedTransactionFactory;
 
 /**
  * @author Clinton Begin
+ * 会话管理工厂
+ * 保存一个configuration配置信息
  */
 public class DefaultSqlSessionFactory implements SqlSessionFactory {
 
@@ -42,6 +44,10 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     this.configuration = configuration;
   }
 
+  /**
+   * 新建会话
+   * @return
+   */
   @Override
   public SqlSession openSession() {
     return openSessionFromDataSource(configuration.getDefaultExecutorType(), null, false);
@@ -87,13 +93,24 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     return configuration;
   }
 
+  /**
+   * 通过连接信息创建会话
+   * @param execType
+   * @param level
+   * @param autoCommit
+   * @return
+   */
   private SqlSession openSessionFromDataSource(ExecutorType execType, TransactionIsolationLevel level, boolean autoCommit) {
     Transaction tx = null;
     try {
+      // 从配置获取环境信息
       final Environment environment = configuration.getEnvironment();
       final TransactionFactory transactionFactory = getTransactionFactoryFromEnvironment(environment);
+      // 创建事务管理器
       tx = transactionFactory.newTransaction(environment.getDataSource(), level, autoCommit);
+      // 创建执行器，用于执行sql语句
       final Executor executor = configuration.newExecutor(tx, execType);
+      // 通过执行器创建会话
       return new DefaultSqlSession(configuration, executor, autoCommit);
     } catch (Exception e) {
       closeTransaction(tx); // may have fetched a connection so lets call close()
@@ -125,6 +142,11 @@ public class DefaultSqlSessionFactory implements SqlSessionFactory {
     }
   }
 
+  /**
+   * 从环境信息获取事务工厂配置，如果未配置，则使用ManagedTransactionFactory
+   * @param environment
+   * @return
+   */
   private TransactionFactory getTransactionFactoryFromEnvironment(Environment environment) {
     if (environment == null || environment.getTransactionFactory() == null) {
       return new ManagedTransactionFactory();
