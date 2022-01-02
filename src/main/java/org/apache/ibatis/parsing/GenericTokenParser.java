@@ -34,6 +34,7 @@ public class GenericTokenParser {
     if (text == null || text.isEmpty()) {
       return "";
     }
+    // 如果不是变量，直接返回
     // search open token
     int start = text.indexOf(openToken, 0);
     if (start == -1) {

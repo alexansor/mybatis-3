@@ -83,7 +83,7 @@ public class XMLStatementBuilder extends BaseBuilder {
     boolean useCache = context.getBooleanAttribute("useCache", isSelect);
     boolean resultOrdered = context.getBooleanAttribute("resultOrdered", false);
 
-    // 解析include标签
+    // 解析include标签（这个方法用到递归调用，会复杂一点
     // Include Fragments before parsing
     XMLIncludeTransformer includeParser = new XMLIncludeTransformer(configuration, builderAssistant);
     includeParser.applyIncludes(context.getNode());
@@ -116,6 +116,7 @@ public class XMLStatementBuilder extends BaseBuilder {
         keyGenerator, keyProperty, keyColumn, databaseId, langDriver, resultSets);
   }
 
+  // 解析selectKey，解析生成新节点，然后最后一步将老节点删除，达到解析替换的目的
   private void processSelectKeyNodes(String id, Class<?> parameterTypeClass, LanguageDriver langDriver) {
     List<XNode> selectKeyNodes = context.evalNodes("selectKey");
     if (configuration.getDatabaseId() != null) {
