@@ -95,21 +95,24 @@ public class XMLStatementBuilder extends BaseBuilder {
     // 解析SQL脚本，创建sqlSource
     // Parse the SQL (pre: <selectKey> and <include> were parsed and removed)
     SqlSource sqlSource = langDriver.createSqlSource(configuration, context, parameterTypeClass);
+    // 获取结果集类型，在执行sql后handleResult时做映射，这也是MyBatis是一个ORM框架的原因
     String resultSets = context.getStringAttribute("resultSets");
     String keyProperty = context.getStringAttribute("keyProperty");
     String keyColumn = context.getStringAttribute("keyColumn");
     KeyGenerator keyGenerator;
-    // 组装selectKeyId
+    // 组装selectKeyId，就是完整方法名后面加上"!selectKey"
     String keyStatementId = id + SelectKeyGenerator.SELECT_KEY_SUFFIX;
+    // 再在前面拼接namespace
     keyStatementId = builderAssistant.applyCurrentNamespace(keyStatementId, true);
     if (configuration.hasKeyGenerator(keyStatementId)) {
       keyGenerator = configuration.getKeyGenerator(keyStatementId);
     } else {
+      // 构建主键生成器
       keyGenerator = context.getBooleanAttribute("useGeneratedKeys",
           configuration.isUseGeneratedKeys() && SqlCommandType.INSERT.equals(sqlCommandType))
           ? Jdbc3KeyGenerator.INSTANCE : NoKeyGenerator.INSTANCE;
     }
-    // 解析mappedStatement并添加到configuration中
+    // 解析mappedStatement并添加到configuration中，key为节点的id值
     builderAssistant.addMappedStatement(id, sqlSource, statementType, sqlCommandType,
         fetchSize, timeout, parameterMap, parameterTypeClass, resultMap, resultTypeClass,
         resultSetTypeEnum, flushCache, useCache, resultOrdered, 
