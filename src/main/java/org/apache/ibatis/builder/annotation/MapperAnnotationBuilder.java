@@ -283,9 +283,14 @@ public class MapperAnnotationBuilder {
     return null;
   }
 
+  /**
+   * 解析脚本
+   * @param method
+   */
   void parseStatement(Method method) {
     Class<?> parameterTypeClass = getParameterType(method);
     LanguageDriver languageDriver = getLanguageDriver(method);
+    // 获取sqlSource，这个方法比较复杂，区分判断（select类型还是selectProvider类型注解）
     SqlSource sqlSource = getSqlSourceFromAnnotations(method, parameterTypeClass, languageDriver);
     if (sqlSource != null) {
       Options options = method.getAnnotation(Options.class);
@@ -389,6 +394,7 @@ public class MapperAnnotationBuilder {
     Class<?> parameterType = null;
     Class<?>[] parameterTypes = method.getParameterTypes();
     for (Class<?> currentParameterType : parameterTypes) {
+      // 参数类型不继承RowBound或者ResultHandler，则更新设置参数类型，如果参数个数大于1个，则包装成ParamMap，并返回
       if (!RowBounds.class.isAssignableFrom(currentParameterType) && !ResultHandler.class.isAssignableFrom(currentParameterType)) {
         if (parameterType == null) {
           parameterType = currentParameterType;
@@ -454,10 +460,12 @@ public class MapperAnnotationBuilder {
 
   private SqlSource getSqlSourceFromAnnotations(Method method, Class<?> parameterType, LanguageDriver languageDriver) {
     try {
+      // 获取sql注解和sqlProvider注解
       Class<? extends Annotation> sqlAnnotationType = getSqlAnnotationType(method);
       Class<? extends Annotation> sqlProviderAnnotationType = getSqlProviderAnnotationType(method);
       if (sqlAnnotationType != null) {
         if (sqlProviderAnnotationType != null) {
+          // 不能存在两种注解，没有优先级的问题
           throw new BindingException("You cannot supply both a static SQL and SqlProvider to method named " + method.getName());
         }
         Annotation sqlAnnotation = method.getAnnotation(sqlAnnotationType);
@@ -465,6 +473,7 @@ public class MapperAnnotationBuilder {
         return buildSqlSourceFromStrings(strings, parameterType, languageDriver);
       } else if (sqlProviderAnnotationType != null) {
         Annotation sqlProviderAnnotation = method.getAnnotation(sqlProviderAnnotationType);
+        // 前面创建的是DynamicSqlSource或者RawSqlSource，这里创建的是ProviderSqlSource
         return new ProviderSqlSource(assistant.getConfiguration(), sqlProviderAnnotation, type, method);
       }
       return null;
@@ -473,6 +482,13 @@ public class MapperAnnotationBuilder {
     }
   }
 
+  /**
+   * 创建sqlSource
+   * @param strings
+   * @param parameterTypeClass
+   * @param languageDriver
+   * @return
+   */
   private SqlSource buildSqlSourceFromStrings(String[] strings, Class<?> parameterTypeClass, LanguageDriver languageDriver) {
     final StringBuilder sql = new StringBuilder();
     for (String fragment : strings) {
@@ -514,6 +530,12 @@ public class MapperAnnotationBuilder {
     return chooseAnnotationType(method, sqlProviderAnnotationTypes);
   }
 
+  /**
+   * 获取注解类型
+   * @param method
+   * @param types
+   * @return
+   */
   private Class<? extends Annotation> chooseAnnotationType(Method method, Set<Class<? extends Annotation>> types) {
     for (Class<? extends Annotation> type : types) {
       Annotation annotation = method.getAnnotation(type);

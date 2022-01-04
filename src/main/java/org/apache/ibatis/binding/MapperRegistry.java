@@ -59,11 +59,13 @@ public class MapperRegistry {
 
   public <T> void addMapper(Class<T> type) {
     if (type.isInterface()) {
+      // 如果已经解析成功，抛异常
       if (hasMapper(type)) {
         throw new BindingException("Type " + type + " is already known to the MapperRegistry.");
       }
       boolean loadCompleted = false;
       try {
+        // 这一步很重要，创建MapperProxyFactory并添加到knowMappers中，后面执行语句就是通过这个代理工厂实现的
         knownMappers.put(type, new MapperProxyFactory<T>(type));
         // It's important that the type is added before the parser is run
         // otherwise the binding may automatically be attempted by the

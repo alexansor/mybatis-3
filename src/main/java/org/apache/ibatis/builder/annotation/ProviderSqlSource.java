@@ -59,16 +59,20 @@ public class ProviderSqlSource implements SqlSource {
     try {
       this.configuration = configuration;
       this.sqlSourceParser = new SqlSourceBuilder(configuration);
+      // 通过方法名和类型获取到指定方法做反射获取到sql脚本
       this.providerType = (Class<?>) provider.getClass().getMethod("type").invoke(provider);
       providerMethodName = (String) provider.getClass().getMethod("method").invoke(provider);
 
       for (Method m : this.providerType.getMethods()) {
+        // 返回类型也必须是CharSequence的子类型
         if (providerMethodName.equals(m.getName()) && CharSequence.class.isAssignableFrom(m.getReturnType())) {
+          // 通过方法名和返回值获取到方法，如果已经获取到过，则抛异常
           if (providerMethod != null){
             throw new BuilderException("Error creating SqlSource for SqlProvider. Method '"
                     + providerMethodName + "' is found multiple in SqlProvider '" + this.providerType.getName()
                     + "'. Sql provider method can not overload.");
           }
+          // 获取到方法后，读取方法的基本信息
           this.providerMethod = m;
           this.providerMethodArgumentNames = new ParamNameResolver(configuration, m).getNames();
           this.providerMethodParameterTypes = m.getParameterTypes();
@@ -79,18 +83,22 @@ public class ProviderSqlSource implements SqlSource {
     } catch (Exception e) {
       throw new BuilderException("Error creating SqlSource for SqlProvider.  Cause: " + e, e);
     }
+    // 如果找不到方法则抛方法不存在异常
     if (this.providerMethod == null) {
       throw new BuilderException("Error creating SqlSource for SqlProvider. Method '"
           + providerMethodName + "' not found in SqlProvider '" + this.providerType.getName() + "'.");
     }
+    // 设置providerContext信息
     for (int i = 0; i< this.providerMethodParameterTypes.length; i++) {
       Class<?> parameterType = this.providerMethodParameterTypes[i];
       if (parameterType == ProviderContext.class) {
+        // 如果providerContext不为空，说明有多个providerContext参数，抛异常
         if (this.providerContext != null){
           throw new BuilderException("Error creating SqlSource for SqlProvider. ProviderContext found multiple in SqlProvider method ("
               + this.providerType.getName() + "." + providerMethod.getName()
               + "). ProviderContext can not define multiple in SqlProvider method argument.");
         }
+        // 创建providerContext实例并赋值参数位置
         this.providerContext = new ProviderContext(mapperType, mapperMethod);
         this.providerContextIndex = i;
       }

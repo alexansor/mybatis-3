@@ -94,7 +94,7 @@ public class XMLMapperBuilder extends BaseBuilder {
       configurationElement(parser.evalNode("/mapper"));
       // 添加已解析的resource
       configuration.addLoadedResource(resource);
-      // 绑定namespace
+      // 绑定namespace，包括解析接口中的注解
       bindMapperForNamespace();
     }
 
