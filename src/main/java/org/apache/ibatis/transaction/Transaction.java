@@ -19,6 +19,7 @@ import java.sql.Connection;
 import java.sql.SQLException;
 
 /**
+ * 包含ds等信息，调用getConnection是获取到连接，并对连接进行管理
  * Wraps a database connection.
  * Handles the connection lifecycle that comprises: its creation, preparation, commit/rollback and close. 
  *
